@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+$autoload = $GLOBALS['_composer_autoload_path']
+    ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+require $autoload;
+unset($GLOBALS['_composer_autoload_path']);
 
 use MMNewmedia\Schematron\Console\CompileSchematronCommand;
 use Symfony\Component\Console\Application;

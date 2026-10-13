@@ -4,8 +4,7 @@ XPath expression parser and compiler for Schematron rule files in PHP.
 
 The library tokenizes and parses XPath 1.0 expressions into an AST, compiles them into executable
 PHP code, and can generate one PHP rule class per `sch:assert` / `sch:report` from a `.sch`
-file. It was originally extracted from the [ezkimo/x-rechnung](https://github.com/ezkimo/x-rechnung)
-project, where it powers the pure-PHP EN 16931 / Factur-X / ZUGFeRD Schematron validation
+file. It powers the pure-PHP EN 16931 / Factur-X / ZUGFeRD Schematron validation
 (no Java required at runtime).
 
 ## Requirements

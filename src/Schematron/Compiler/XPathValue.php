@@ -13,7 +13,7 @@ final class XPathValue
      * Equivalent of XPath 1.0 string() for a node-set: string value of the
      * first node in document order, or '' for an empty node-set.
      *
-     * @param DOMNodeList<int, DOMNode>|array<int, DOMNode|scalar>|scalar|null $nodes
+     * @param DOMNodeList<DOMNode>|array<int, DOMNode|scalar>|scalar|null $nodes
      */
     public static function stringValue(mixed $nodes): string
     {

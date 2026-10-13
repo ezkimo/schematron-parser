@@ -13,7 +13,6 @@ use MMNewmedia\Schematron\Ast\NodeTestNode;
 use MMNewmedia\Schematron\Ast\OperatorNode;
 use MMNewmedia\Schematron\Ast\PathNode;
 use MMNewmedia\Schematron\Ast\PathOperatorNode;
-use MMNewmedia\Schematron\Ast\PhpNode;
 use MMNewmedia\Schematron\Ast\PredicateNode;
 use MMNewmedia\Schematron\Ast\VariableNode;
 use MMNewmedia\Schematron\Ast\XPathTokenizer;
@@ -108,14 +107,8 @@ class XPathAstParser
     {
         $token = array_shift($tokens);
 
-        // PHP-Code
-        if ($token['type'] === 'PHP') {
-            $node = new PhpNode($token['value']);
-            return $this->parsePredicates($node, $tokens);
-        }
-
         // String-Literal
-        elseif ($token['type'] === 'STRING') {
+        if ($token['type'] === 'STRING') {
             $node = new LiteralNode($token['value']);
             return $this->parsePredicates($node, $tokens);
         }

@@ -10,12 +10,12 @@ use RuntimeException;
 class IfThenElseFunction implements XPathFunctionInterface
 {
     #[Override]
-    public function supports(string $expression): bool
+    public function supports(string $name): bool
     {
-        $expression = trim($expression);
-        return str_starts_with($expression, 'if ')
-            && str_contains($expression, ' then ')
-            && str_contains($expression, ' else ');
+        $name = trim($name);
+        return str_starts_with($name, 'if ')
+            && str_contains($name, ' then ')
+            && str_contains($name, ' else ');
     }
 
     #[Override]

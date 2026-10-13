@@ -13,7 +13,6 @@ use MMNewmedia\Schematron\Ast\NodeTestNode;
 use MMNewmedia\Schematron\Ast\OperatorNode;
 use MMNewmedia\Schematron\Ast\PathNode;
 use MMNewmedia\Schematron\Ast\PathOperatorNode;
-use MMNewmedia\Schematron\Ast\PhpNode;
 use MMNewmedia\Schematron\Ast\PredicateNode;
 use MMNewmedia\Schematron\Ast\VariableNode;
 use MMNewmedia\Schematron\Compiler\Functions\NodeSetAwareFunctionInterface;
@@ -64,10 +63,6 @@ final class XPathAstCompiler
 
     public function compile(AbstractNode $node, string $context): string
     {   
-        if ($node instanceof PhpNode) {
-            return $node->code;
-        }
-
         $codedbCompiled = $this->tryCompileDocumentCodeList($node, $context);
         if ($codedbCompiled !== null) {
             return $codedbCompiled;
@@ -188,7 +183,7 @@ final class XPathAstCompiler
         //   2. PredicateNode(PathNode('cl'), @id=N)
         //   3. PredicateNode(PathNode('enumeration'), @value=...)
         $steps = $this->collectDocumentSteps($node);
-        if (count($steps) !== 3) {
+        if ($steps === null) {
             return null;
         }
 
@@ -223,9 +218,9 @@ final class XPathAstCompiler
      * Unwraps the left-deep chain into the right-hand path steps,
      * returning [codedb, cl[@id=N], enumeration[@value=...]].
      *
-     * @return array{0: AbstractNode, 1: AbstractNode, 2: AbstractNode}
+     * @return array{0: AbstractNode, 1: AbstractNode, 2: AbstractNode}|null
      */
-    protected function collectDocumentSteps(PathOperatorNode $node): array
+    protected function collectDocumentSteps(PathOperatorNode $node): ?array
     {
         $steps = [];
         $current = $node;
@@ -235,7 +230,11 @@ final class XPathAstCompiler
             $current = $current->left;
         }
 
-        return $steps;
+        if (count($steps) !== 3) {
+            return null;
+        }
+
+        return [$steps[0], $steps[1], $steps[2]];
     }
 
     /**

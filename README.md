@@ -86,14 +86,11 @@ public static function context(DOMXPath $xpath, DOMNode $context): iterable; // 
 ### CLI
 
 ```bash
-php bin/compile-schematron-rules.php [outputRoot] [dataDir]
+php bin/compile-schematron.php <source.sch> <outputDir> <namespace>
 ```
 
-Compiles the seven standard rule sets (CII, UBL and the five Factur-X / ZUGFeRD profiles) from
-preprocessed `.sch` files. `dataDir` must follow the x-rechnung layout
-(`cii/schematron/preprocessed/`, `ubl/schematron/preprocessed/`, `zugferd/_preprocessed/`) and
-defaults to `<package>/data`; `outputRoot` defaults to the package root and receives
-`src/Schematron/Rules/<Profile>` plus `rules-config.php`.
+Compiles a single Schematron file: every `sch:assert` / `sch:report` is written as a PHP rule
+class into `<outputDir>`, using `<namespace>` as the generated class namespace.
 
 ### Codedb lookups
 

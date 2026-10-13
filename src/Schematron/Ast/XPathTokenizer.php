@@ -10,9 +10,6 @@ final class XPathTokenizer
     {
         $tokens = [];
         $length = strlen($expression);
-        $i = 0;
-
-        // echo "-> " . $expression . "<br>";
 
         for ($i = 0; $i < $length; $i++) {
             $char = $expression[$i];
@@ -184,21 +181,6 @@ final class XPathTokenizer
             // Fallback: einzelnes Zeichen als CHAR
             $tokens[] = ['type' => 'CHAR', 'value' => $char];
         }
-
-        // if (str_contains($expression, '/xs:decimal(')) {
-        //     echo " -> " . $expression . "<br>";
-        //     foreach ($tokens as $token) {
-        //         echo $token['type'] . " => " . $token['value'] . "<br>";
-        //     }
-        //     die();
-        // }
-
-        // if ($expression === "string-length(substring-after(ram:LineTotalAmount,'.'))<=2") {
-        //     foreach ($tokens as $token) {
-        //         echo $token['type'] . " => " . $token['value'] . "<br>";
-        //     }
-        //     die();
-        // }
 
         return $tokens;
     }

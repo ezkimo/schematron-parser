@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MMNewmedia\Schematron\Compiler\Functions;
 
 use Override;
+use RuntimeException;
 
 final class SubstringBeforeFunction implements XPathFunctionInterface
 {

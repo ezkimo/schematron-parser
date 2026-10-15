@@ -56,6 +56,9 @@ final class XPathAstCompiler
     /** @var array<class-string<XPathFunctionInterface>, XPathFunctionInterface> */
     protected array $functionInstances = [];
 
+    /** @var array<string, XPathFunctionInterface|null> */
+    protected array $resolvedFunctions = [];
+
     /** @param class-string<XPathFunctionInterface>[] $functions */
     public function __construct(
         protected readonly array $functions
@@ -151,9 +154,7 @@ final class XPathAstCompiler
 
     /**
      * Recognizes the Factur-X code-list membership check
-     *
-     *   document('FILE_codedb.xml')/codedb/cl[@id=N]/enumeration[@value=$var]
-     *
+     * document('FILE_codedb.xml')/codedb/cl[@id=N]/enumeration[@value=$var]
      * and compiles it to a runtime CodedbCodeList lookup.
      *
      * @return string|null compiled PHP, or null when the node is not this pattern
@@ -299,22 +300,22 @@ final class XPathAstCompiler
 
     protected function compilePathStepFunction(FunctionNode $node, AbstractNode $left, string $leftXpath, string $operator, string $context): string
     {
-        foreach ($this->functions as $fqcn) {
-            $function = $this->getFunctionInstance($fqcn);
-            if ($function->supports($node->name)) {
-                $phpArgs = [];
-                foreach ($node->arguments as $argument) {
-                    if (
-                        $function instanceof NodeSetAwareFunctionInterface
-                        && $this->isPathTypeNode($argument)
-                    ) {
-                        $phpArgs[] = $this->compileStepFunctionNodeSet($left, $argument, $operator, $context);
-                    } else {
-                        $phpArgs[] = $this->compileStepFunctionScalar($left, $argument, $operator, $context);
-                    }
+        $function = $this->resolveFunction($node->name);
+
+        if ($function !== null) {
+            $phpArgs = [];
+            foreach ($node->arguments as $argument) {
+                if (
+                    $function instanceof NodeSetAwareFunctionInterface
+                    && $this->isPathTypeNode($argument)
+                ) {
+                    $phpArgs[] = $this->compileStepFunctionNodeSet($left, $argument, $operator, $context);
+                } else {
+                    $phpArgs[] = $this->compileStepFunctionScalar($left, $argument, $operator, $context);
                 }
-                return $function->compile($phpArgs, $context);
             }
+
+            return $function->compile($phpArgs, $context);
         }
 
         $rightXpath = $this->compilePath($node, $context);
@@ -326,13 +327,11 @@ final class XPathAstCompiler
     protected function compileFunction(FunctionNode $node, string $context): string
     {
         $name = $node->name;
+        $function = $this->resolveFunction($name);
 
-        foreach ($this->functions as $fqcn) {
-            $function = $this->getFunctionInstance($fqcn);
-            if ($function->supports($name)) {
-                $arguments = $this->compileFunctionArguments($node, $context, $function);
-                return $function->compile($arguments, $context);
-            }
+        if ($function !== null) {
+            $arguments = $this->compileFunctionArguments($node, $context, $function);
+            return $function->compile($arguments, $context);
         }
 
         throw new RuntimeException(sprintf(
@@ -748,6 +747,22 @@ final class XPathAstCompiler
         }
 
         throw new RuntimeException("Cannot convert node to XPath path: " . get_class($node));
+    }
+
+    protected function resolveFunction(string $name): ?XPathFunctionInterface
+    {
+        if (array_key_exists($name, $this->resolvedFunctions)) {
+            return $this->resolvedFunctions[$name];
+        }
+
+        foreach ($this->functions as $fqcn) {
+            $function = $this->getFunctionInstance($fqcn);
+            if ($function->supports($name)) {
+                return $this->resolvedFunctions[$name] = $function;
+            }
+        }
+
+        return $this->resolvedFunctions[$name] = null;
     }
 
     protected function getFunctionInstance(string $class): XPathFunctionInterface

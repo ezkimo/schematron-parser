@@ -18,6 +18,12 @@ final class CodedbCodeList
     /** @var array<string, DOMDocument> */
     private static array $documents = [];
 
+    /** @var array<string, DOMXPath> */
+    private static array $xpaths = [];
+
+    /** @var array<string, array<int, array<string, true>>> */
+    private static array $indexes = [];
+
     /** @var array<string, string|false> */
     private static array $resolvedPaths = [];
 
@@ -26,19 +32,11 @@ final class CodedbCodeList
 
     public static function has(string $filename, int $clId, string $value): bool
     {
-        $document = self::document($filename);
-        $xpath = new DOMXPath($document);
+        if (!isset(self::$indexes[$filename])) {
+            self::document($filename);
+        }
 
-        $value = addslashes($value);
-        $query = sprintf(
-            "//cl[@id='%d']/enumeration[@value='%s']",
-            $clId,
-            $value
-        );
-
-        $nodes = @$xpath->query($query);
-
-        return $nodes !== false && $nodes->length > 0;
+        return isset(self::$indexes[$filename][$clId][$value]);
     }
 
     public static function document(string $filename): DOMDocument
@@ -55,7 +53,11 @@ final class CodedbCodeList
                 ));
             }
 
+            $xpath = new DOMXPath($document);
+
             self::$documents[$filename] = $document;
+            self::$xpaths[$filename] = $xpath;
+            self::$indexes[$filename] = self::buildIndex($xpath);
         }
 
         return self::$documents[$filename];
@@ -116,5 +118,42 @@ final class CodedbCodeList
         self::$baseDirectories = $directories;
         self::$resolvedPaths = [];
         self::$documents = [];
+        self::$xpaths = [];
+        self::$indexes = [];
+    }
+
+    /**
+     * Builds the value index for a document in a single pass.
+     *
+     * @return array<int, array<string, true>>
+     */
+    private static function buildIndex(DOMXPath $xpath): array
+    {
+        $index = [];
+
+        $nodes = @$xpath->query('//cl/enumeration');
+        if ($nodes === false) {
+            return $index;
+        }
+
+        foreach ($nodes as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            $parent = $node->parentNode;
+            if (!$parent instanceof \DOMElement) {
+                continue;
+            }
+
+            $rawId = $parent->getAttribute('id');
+            if ((string) (int) $rawId !== $rawId) {
+                continue;
+            }
+
+            $index[(int) $rawId][$node->getAttribute('value')] = true;
+        }
+
+        return $index;
     }
 }

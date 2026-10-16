@@ -25,43 +25,43 @@ final class ExpressionCompiler
     ) {}
 
     /**
-     * Kompiliert einen XPath Ausdruck zu ausführbarem PHP Code.
-     * 
-     * @param string $expression Der zu kompilierende XPath Ausdruck
-     * @param string $context    PHP Ausdruck für den Kontextknoten (z.B. '$node')
+     * Compiles an XPath expression into executable PHP code.
+     *
+     * @param string $expression The XPath expression to compile
+     * @param string $context    PHP expression for the context node (e.g. '$node')
      * @return string
      */
     public function compile(string $expression, string $context): string
     {
-        // Normalisierung (z.B. Entfernen von Leerzeichen, Vereinheitlichung von Schreibweisen)
+        // Normalize (e.g. remove whitespace, unify spellings)
         $normalizedExpression = $this->normalizer->normalize($expression);
 
-        // Stabiler Cache-Key (Hash des normalisierten Ausdrucks)
+        // Stable cache key (hash of the normalized expression)
         $key = $this->buildCacheKey($normalizedExpression);
 
-        // PHP-Code Cache prüfen
+        // Check PHP code cache
         if (isset($this->phpCache[$key])) {
             return $this->phpCache[$key];
         }
 
-        // AST Cache - Parser wird nur einmalig ausgeführt, um den Ausdruck in einen AST zu übersetzen
+        // AST cache - the parser only runs once to translate the expression into an AST
         if (! isset($this->astCache[$key])) {
             $this->astCache[$key] = $this->parser->parse($normalizedExpression);
         }
 
-        // AST wird in ausführbaren PHP Code kompiliert
+        // Compile the AST into executable PHP code
         $php = $this->compiler->compile($this->astCache[$key], $context);
-        
-        // Ergebnis cachen und zurückgeben
+
+        // Cache and return the result
         return $this->phpCache[$key] = $php;
     }
 
     /**
-     * Kompiliert einen XPath Ausdruck zu einem PHP Ausdruck, der eine Node-Set
-     * (DOMNodeList oder DOMNode[]) für den gegebenen Kontextknoten liefert.
+     * Compiles an XPath expression into a PHP expression that evaluates a node-set
+     * (DOMNodeList or DOMNode[]) for the given context node.
      *
-     * @param string $expression Der zu kompilierende XPath Ausdruck
-     * @param string $context    PHP Ausdruck für den Kontextknoten (z.B. '$node')
+     * @param string $expression The XPath expression to compile
+     * @param string $context    PHP expression for the context node (e.g. '$node')
      * @return string
      */
     public function compileNodeSet(string $expression, string $context): string
@@ -84,19 +84,20 @@ final class ExpressionCompiler
     }
 
     /**
-     * Cache leeren (z.B. nach Änderungen an der Schematron-Datei oder bei Versionswechseln)
-     * 
+     * Clear the cache (e.g. after changes to the Schematron file or on version upgrade)
+     *
      * @return void
      */
     public function clearCache(): void
     {
         $this->astCache = [];
         $this->phpCache = [];
+        $this->normalizer->clearCache();
     }
 
     /**
-     * Erzeugt einen stabilen Cache-Key für den gegebenen normalisierten Ausdruck
-     * 
+     * Builds a stable cache key for the given normalized expression
+     *
      * @param string $normalizedExpression
      * @return string
      */

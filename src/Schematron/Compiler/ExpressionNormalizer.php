@@ -6,24 +6,47 @@ namespace MMNewmedia\Schematron\Compiler;
 
 class ExpressionNormalizer
 {
+    /**
+     * Cache for normalized expressions, keyed by the raw expression
+     *
+     * @var array<string, string>
+     */
+    protected array $normalizationCache = [];
+
     public function normalize(string $expression): string
     {
-        $expression = trim($expression);
+        if (isset($this->normalizationCache[$expression])) {
+            return $this->normalizationCache[$expression];
+        }
 
-        $expression = $this->normalizeWhitespace($expression);
-        $expression = $this->normalizeOperators($expression);
-        $expression = $this->normalizeIfThenElse($expression);
-        $expression = $this->normalizeParantheses($expression);
+        $normalized = trim($expression);
 
-        return $expression;
+        $normalized = $this->normalizeWhitespace($normalized);
+        $normalized = $this->normalizeOperators($normalized);
+        $normalized = $this->normalizeIfThenElse($normalized);
+        $normalized = $this->normalizeParantheses($normalized);
+
+        // Mehrfache Normalisierung identischer Ausdrücke über den Cache bedienen
+        return $this->normalizationCache[$expression] = $normalized;
+    }
+
+    /**
+     * Clear the cache (e.g. after changes to the Schematron file or on version upgrade)
+     *
+     * @return void
+     */
+    public function clearCache(): void
+    {
+        $this->normalizationCache = [];
     }
 
     protected function normalizeWhitespace(string $expression): string
     {
-        // Mehrfache Whitespace durch ein einzelnes Leerzeichen ersetzen
+        // Replace multiple whitespace with a single space
         $expression = preg_replace('/\s+/', ' ', $expression);
 
-        // Kein Whitespace vor oder nach Klammern (nach Klammern nur, wenn danach keine alphanumerischen Zeichen folgen)
+        // No whitespace before or after parentheses (only after parentheses, when
+        // no alphanumeric characters follow)
         $expression = preg_replace('/\s*\(\s*/', '(', $expression);
         $expression = preg_replace('/\)\s+(?=[\)\s]|$)/', ')', $expression);
 
@@ -32,7 +55,7 @@ class ExpressionNormalizer
 
     protected function normalizeOperators(string $expression): string
     {
-        // Vergleichsoperatoren mit Spaces
+        // Comparison operators with spaces
         $expression = preg_replace('/(?<![<>!])\s*=\s*(?![=])/', '=', $expression);
         $expression = preg_replace('/!\s*=(?=[^=])/', '!=', $expression);
         $expression = preg_replace('/<\s*=(?=[^=])/', '<=', $expression);
@@ -40,7 +63,7 @@ class ExpressionNormalizer
         $expression = preg_replace('/<\s*(?=[^=])/', '< ', $expression);
         $expression = preg_replace('/>\s*(?=[^=])/', '> ', $expression);
 
-        // Logische Operatoren
+        // Logical operators
         $expression = preg_replace('/\s+and\s+/i', ' and ', $expression);
         $expression = preg_replace('/\s+or\s+/i', ' or ', $expression);
         $expression = preg_replace('/\s+mod\s+/i', ' mod ', $expression);
@@ -67,7 +90,7 @@ class ExpressionNormalizer
 
     protected function normalizeParantheses(string $expression): string
     {
-        // einfache Klammer-Normalisierung, doppelte Spaces um Klammern entfernen
+        // Simple parentheses normalization, removing doubled spaces around parentheses
         $expression = preg_replace('/\(\s+/', '(', $expression);
         $expression = preg_replace('/\s+\)/', ')', $expression);
 

@@ -19,6 +19,16 @@ final class SchematronCompilerService
 
     public function compile(string $schematronFile, string $namespace): void
     {
+        clearstatcache();
+        if (is_dir($this->outputDirectory) === false) {
+            if (mkdir($this->outputDirectory, 0777, true) === false) {
+                throw new RuntimeException(sprintf(
+                    'Failed to create output directory: %s',
+                    $this->outputDirectory
+                ));
+            };
+        }
+
         $dom = new DOMDocument();
         $dom->load($schematronFile);
 
@@ -111,20 +121,6 @@ final class {$className}
     }
 {$contextMethod}}
 PHP;
-
-        clearstatcache();
-        if (is_dir($this->outputDirectory) === false) {
-            if (mkdir($this->outputDirectory, 0777, true) === false) {
-                throw new RuntimeException(sprintf(
-                    'Failed to create output directory: %s', 
-                    $this->outputDirectory
-                ));
-            };
-        }
-
-        if (file_exists($this->outputDirectory . '/' . $className . '.php')) {
-            unlink($this->outputDirectory . '/' . $className . '.php');
-        }
 
         if (file_put_contents($this->outputDirectory . '/' . $className . '.php', $code) === false) {
             throw new RuntimeException(sprintf(

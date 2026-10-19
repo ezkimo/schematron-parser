@@ -65,6 +65,10 @@ EN 16931 schematron (`upper-case`, `lower-case`, `matches`, `tokenize`, `distinc
 `Compiler/Functions/`. Custom functions implement `XPathFunctionInterface` (or
 `NodeSetAwareFunctionInterface`) and are picked up by `FunctionLoader`.
 
+The discovered class list is cached per directory/namespace, so repeated `load()` calls do not
+rescan the filesystem. Call `FunctionLoader::clearCache()` if the functions directory changes
+at runtime.
+
 ### Generating rule classes from a .sch file
 
 ```php
